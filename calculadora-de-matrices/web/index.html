@@ -1,0 +1,205 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de Matrices</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="logo"><i></i><i></i><i></i><i></i></div>
+  <h1>Calculadora de Matrices</h1>
+  <div class="spacer"></div>
+  <span id="sesion" title="ID de sesión — clic para copiar">sesión: …</span>
+  <div id="estado"><b></b><span>conectando…</span></div>
+  <button class="icon-btn ghost" id="btnTema" title="Cambiar tema">🌓</button>
+</header>
+
+<main>
+  <!-- ============ COLUMNA IZQUIERDA ============ -->
+  <div class="columna">
+
+    <section>
+      <h2>Editor de matriz <span class="tag" id="modoEditor">nueva</span></h2>
+      <div class="body">
+        <div class="row">
+          <div class="ancho-2">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" placeholder="Matriz A" maxlength="40">
+          </div>
+          <div>
+            <label>Filas</label>
+            <div class="dim-ctl">
+              <button class="mini" data-dim="filas" data-paso="-1">−</button>
+              <output id="outFilas">2</output>
+              <button class="mini" data-dim="filas" data-paso="1">+</button>
+            </div>
+          </div>
+          <div>
+            <label>Columnas</label>
+            <div class="dim-ctl">
+              <button class="mini" data-dim="cols" data-paso="-1">−</button>
+              <output id="outCols">2</output>
+              <button class="mini" data-dim="cols" data-paso="1">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-wrap"><div class="mgrid" id="mgrid"></div></div>
+
+        <div class="btns">
+          <button class="primary" id="btnGuardar">Guardar nueva</button>
+          <button id="btnActualizar" disabled>Actualizar</button>
+          <button class="ghost" id="btnCeros">Ceros</button>
+          <button class="ghost" id="btnIdentidad">Identidad</button>
+          <button class="ghost" id="btnAleatoria">Aleatoria</button>
+          <button class="ghost" id="btnNueva">Nueva</button>
+        </div>
+
+        <details>
+          <summary>Pegar / copiar como JSON</summary>
+          <div class="json-box">
+            <textarea id="jsonIn" placeholder="[[1,2],[3,4]]"></textarea>
+            <div class="btns">
+              <button class="mini" id="btnCargarJson">Cargar al editor</button>
+              <button class="mini ghost" id="btnVolcarJson">Volcar editor aquí</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section>
+      <h2>Matrices guardadas <span class="tag" id="conteo">0</span></h2>
+      <div class="body">
+        <div class="btns">
+          <button class="mini ghost" id="btnRecargar">Recargar lista</button>
+        </div>
+        <div class="lista" id="lista"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ COLUMNA DERECHA ============ -->
+  <div class="columna">
+
+    <section>
+      <h2>Operaciones</h2>
+      <div class="body">
+        <div class="row">
+          <div>
+            <label for="selA">Matriz A</label>
+            <select id="selA"></select>
+          </div>
+          <div>
+            <label for="selB">Matriz B</label>
+            <select id="selB"></select>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button class="primary" data-op="sumar">A + B</button>
+          <button class="primary" data-op="multiplicar">A × B</button>
+          <button data-op="transponer">Aᵀ</button>
+          <button data-op="determinante">det(A)</button>
+        </div>
+
+        <p class="hint" id="hintOp">
+          La suma exige dimensiones iguales; la multiplicación, que las columnas de A
+          coincidan con las filas de B. Transponer y determinante usan sólo la matriz A.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Resultado <span class="tag" id="tagResultado">—</span></h2>
+      <div class="body">
+        <div id="resultado"><p class="vacio">Todavía no ejecutaste ninguna operación.</p></div>
+        <div class="btns" id="accionesResultado" hidden>
+          <button class="mini" id="btnGuardarRes">Guardar como matriz</button>
+          <button class="mini ghost" id="btnEditarRes">Abrir en el editor</button>
+        </div>
+        <details id="detalleJson" hidden>
+          <summary>Respuesta cruda de la API</summary>
+          <pre class="json" id="jsonOut"></pre>
+        </details>
+      </div>
+    </section>
+
+    <section>
+      <h2>Log de ejecución <span class="tag" id="tagMongo">MongoDB</span></h2>
+      <div class="body">
+        <div id="mongoOff" hidden class="db-off">
+          <b>MongoDB no está conectado.</b>
+          <div class="hint mt-4" id="mongoErr"></div>
+          <div class="btns mt-8">
+            <button class="mini" id="btnReintentar">Reintentar conexión</button>
+          </div>
+        </div>
+
+        <div class="chips" id="resumen"></div>
+
+        <div class="row">
+          <div>
+            <label for="filtroSesion">Ámbito</label>
+            <select id="filtroSesion">
+              <option value="mia">Solo esta sesión</option>
+              <option value="todas">Todas las sesiones</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtroExito">Resultado</label>
+            <select id="filtroExito">
+              <option value="">Todos</option>
+              <option value="true">Exitosos</option>
+              <option value="false">Fallidos</option>
+            </select>
+          </div>
+          <div>
+            <label for="filtroTipo">Operación</label>
+            <select id="filtroTipo">
+              <option value="">Todas</option>
+              <option value="sumar">sumar</option>
+              <option value="multiplicar">multiplicar</option>
+              <option value="transponer">transponer</option>
+              <option value="determinante">determinante</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button class="mini ghost" id="btnRecargarLogs">Recargar historial</button>
+        </div>
+
+        <div class="logs" id="logs"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Referencia de la API</h2>
+      <div class="body">
+        <p class="hint">
+          <code>POST /matrices</code> · <code>GET /matrices</code> ·
+          <code>GET /matrices/{id}</code> · <code>PUT /matrices/{id}</code> ·
+          <code>DELETE /matrices/{id}</code><br>
+          <code>POST /operaciones/sumar?id1=&amp;id2=</code> ·
+          <code>POST /operaciones/multiplicar?id1=&amp;id2=</code> ·
+          <code>GET /operaciones/transponer?id=</code> ·
+          <code>GET /operaciones/determinante?id=</code><br>
+          <code>GET /logs</code> · <code>GET /logs/{id}</code> ·
+          <code>GET /logs/resumen</code> · <code>GET /logs/estado</code> · <code>GET /sesion</code>
+        </p>
+        <p class="hint">Documentación interactiva: <code>/docs</code> (solo con <code>HABILITAR_DOCS=1</code>)</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div id="toasts"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

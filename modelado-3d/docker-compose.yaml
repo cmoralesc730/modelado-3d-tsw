@@ -1,0 +1,19 @@
+services:
+  matrix-api:
+    build: .
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      # Calculadora de Matrices (calculadora-de-matrices) publicada en el puerto 8000 del host
+      - CALCULADORA_URL=http://host.docker.internal:8000
+      # Token compartido con la calculadora (ver .env)
+      - SERVICIO_TOKEN=${SERVICIO_TOKEN:-}
+      # Orígenes desde los que se acepta el WebSocket /ws/transform
+      - ORIGENES_PERMITIDOS=http://localhost:8001,http://127.0.0.1:8001
+      # Descomentar para exponer /docs, /redoc y /openapi.json (solo en desarrollo)
+      # - HABILITAR_DOCS=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

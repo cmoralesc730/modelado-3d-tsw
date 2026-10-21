@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Visualizador 3D - FastAPI & Three.js</title>
+<link rel="stylesheet" href="/static/viewer.css">
+<!-- Three.js r128 servido desde el propio proyecto (sin CDN externo) -->
+<script src="/static/vendor/three-r128.min.js"></script>
+</head>
+<body>
+
+  <div id="info">
+<h3>Visualizador 3D (FastAPI + WebSocket)</h3>
+<p>Estado WebSocket: <span id="ws-status" class="estado pendiente">Conectando...</span></p>
+<p>Calculadora de Matrices: <span id="calc-status" class="estado pendiente">Esperando...</span></p>
+<p>Modelo: <select id="modelo-select"></select></p>
+<p>Puntos cargados desde CSV: <strong id="point-count">0</strong></p>
+</div>
+
+<script src="/static/viewer.js"></script>
+</body>
+</html>

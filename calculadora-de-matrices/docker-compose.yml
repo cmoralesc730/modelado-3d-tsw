@@ -1,0 +1,32 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_DB: matrices
+      # Lo usa modelado-3d para nombrar su sesión en los logs (ver .env)
+      SERVICIO_TOKEN: ${SERVICIO_TOKEN:-}
+      # Descomentar para exponer /docs, /redoc y /openapi.json (solo en desarrollo)
+      # HABILITAR_DOCS: "1"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mongo_data:

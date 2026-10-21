@@ -1,0 +1,11 @@
+/* viewer.css */
+body { margin: 0; overflow: hidden; background: #111; font-family: sans-serif; }
+#info {
+  position: absolute; top: 10px; left: 10px; color: #fff;
+  background: rgba(0,0,0,0.7); padding: 12px 18px; border-radius: 8px;
+}
+
+/* Indicadores de estado (antes style="color: ..." en línea; la CSP no lo permite) */
+.estado.pendiente { color: orange; }
+.estado.ok { color: #00ff88; }
+.estado.error { color: #ff4444; }
