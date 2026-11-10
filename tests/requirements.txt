@@ -1,0 +1,8 @@
+# Pruebas en proceso (tests/)
+pytest>=8.0
+fastapi>=0.100.0
+httpx>=0.25.0
+pydantic>=2.0.0
+pymongo>=4.6.0
+# Pruebas E2E con navegador (tests_e2e/), contra los contenedores levantados
+pytest-playwright>=0.5
