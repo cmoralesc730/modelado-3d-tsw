@@ -6,10 +6,10 @@ import security
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from models.models import CadenaMatrices, LogOut, MatrixCreate, Transformacion
+from models.models import CadenaMatrices, LogOut, MatrixCreate, Morph, Transformacion
 from repository.log_repository import LogRepository
 from repository.repository import MatrixRepository
-from services import log_service, services, transformaciones
+from services import log_service, morph, services, transformaciones
 
 _docs = security.docs_habilitadas()
 app = FastAPI(
@@ -117,6 +117,33 @@ def matriz_transformacion(request: Request, payload: Transformacion):
     respuesta = _calcular(registrar, {}, transformaciones.matriz_transformacion, list(parametros.values()))
     respuesta["column_major"] = transformaciones.column_major(respuesta["resultado"])
     return respuesta
+
+def _calcular_morph(registrar: Callable, t: float, resolucion: int) -> dict:
+    """Corre el morph y registra el log (sin los vértices, que pesan demasiado)."""
+    try:
+        vertices = morph.morph(t, resolucion)
+    except ValueError as e:
+        registrar(False, {}, error=str(e))
+        raise HTTPException(400, str(e))
+    registrar(True, {})
+    return {
+        "t": t,
+        "resolucion": resolucion,
+        "figura": morph.nombre_figura(t),
+        "total_vertices": len(vertices),
+        "vertices": vertices,
+    }
+
+@app.post("/operaciones/morph")
+def morph_dona_taza(request: Request, payload: Morph):
+    """Vértices del morph dona -> taza: V(t) = (1 - t) * Dona + t * Taza.
+
+    `t` va de 0 (dona) a 1 (taza); `resolucion` es la cantidad de puntos por
+    lado de la malla, así que se devuelven resolucion² vértices [x, y, z].
+    """
+    parametros = payload.model_dump()
+    registrar = _registrador(request, "morph", "POST", parametros)
+    return _calcular_morph(registrar, payload.t, payload.resolucion)
 
 @app.get("/operaciones/transponer")
 def transponer_matriz(request: Request, id: int):
