@@ -1,0 +1,9 @@
+# Levanta todo el sistema con un solo comando desde esta carpeta:
+#   docker compose up -d --build
+# Cada proyecto conserva sus rutas y su .env; también se pueden levantar por separado.
+include:
+  - calculadora-de-matrices/docker-compose.yml # api + mongo
+  - path:
+      - modelado-3d/docker-compose.yaml # matrix-api
+      - modelado-3d/docker-compose.n8n.yaml # n8n
+      - docker-compose.integracion.yaml # conexión entre ambos proyectos

@@ -17,3 +17,10 @@ services:
       # - HABILITAR_DOCS=1
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # La imagen no trae curl; se usa Python para consultar el endpoint raíz
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

@@ -1,0 +1,18 @@
+# Ajustes que solo aplican cuando todo corre junto (ver docker-compose.yaml)
+services:
+  matrix-api:
+    environment:
+      # Misma red de compose: se llega a la calculadora por su nombre de servicio
+      - CALCULADORA_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    # La imagen no trae curl; se usa Python para consultar el endpoint raíz
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
