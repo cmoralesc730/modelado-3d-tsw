@@ -1,0 +1,3 @@
+# Cachés de Python y pytest generadas al correr las pruebas
+__pycache__/
+.pytest_cache/

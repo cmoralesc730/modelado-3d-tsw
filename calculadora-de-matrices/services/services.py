@@ -4,6 +4,10 @@ def sumar(m1: list[list[float]], m2: list[list[float]]) -> list[list[float]]:
         raise ValueError("las matrices deben tener la misma dimensión")
     return [[a + b for a, b in zip(fila1, fila2)] for fila1, fila2 in zip(m1, m2)]
 
+def escalar(k: float, m: list[list[float]]) -> list[list[float]]:
+    """Producto de un escalar por una matriz: k * M."""
+    return [[k * a for a in fila] for fila in m]
+
 def multiplicar(m1: list[list[float]], m2: list[list[float]]) -> list[list[float]]:
     if len(m1[0]) != len(m2):
         raise ValueError("el número de columnas de la primera matriz debe ser igual al número de filas de la segunda")

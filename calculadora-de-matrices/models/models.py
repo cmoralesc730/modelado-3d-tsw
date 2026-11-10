@@ -1,5 +1,6 @@
 # models.py
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
+from services.morph import RESOLUCION_DEFECTO, RESOLUCION_MAX, RESOLUCION_MIN
 
 
 class MatrixCreate(BaseModel):
@@ -39,6 +40,35 @@ class Transformacion(BaseModel):
     rx: float = 0.0
     ry: float = 0.0
     rz: float = 0.0
+
+class Morph(BaseModel):
+    """Parámetros del morph dona -> taza."""
+    t: float = Field(ge=0.0, le=1.0, allow_inf_nan=False,
+                     description="0 = dona, 1 = taza")
+    resolucion: int = Field(RESOLUCION_DEFECTO, ge=RESOLUCION_MIN, le=RESOLUCION_MAX, strict=True,
+                            description="puntos por lado de la malla (resolucion² vértices); "
+                                        "100 = 10,000 puntos como dona.csv")
+
+class FiguraCreate(Morph):
+    """Figura del morph que se guarda con nombre para consultarla después."""
+    nombre: str = Field(min_length=1, max_length=50, pattern=r"^\w[\w .\-]*$",
+                        description="letras, números, espacios, '.', '-' y '_'; empieza con letra o número")
+
+    @field_validator("nombre", mode="before")
+    @classmethod
+    def limpiar_nombre(cls, v):
+        return " ".join(v.split()) if isinstance(v, str) else v
+
+class FiguraResumen(BaseModel):
+    nombre: str
+    t: float
+    resolucion: int
+    figura: str
+    total_vertices: int
+    creado_en: str
+
+class FiguraOut(FiguraResumen):
+    vertices: list[list[float]]
 
 class OperacionLog(BaseModel):
     tipo: str
