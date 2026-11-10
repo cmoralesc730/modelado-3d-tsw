@@ -49,6 +49,27 @@ class Morph(BaseModel):
                             description="puntos por lado de la malla (resolucion² vértices); "
                                         "100 = 10,000 puntos como dona.csv")
 
+class FiguraCreate(Morph):
+    """Figura del morph que se guarda con nombre para consultarla después."""
+    nombre: str = Field(min_length=1, max_length=50, pattern=r"^\w[\w .\-]*$",
+                        description="letras, números, espacios, '.', '-' y '_'; empieza con letra o número")
+
+    @field_validator("nombre", mode="before")
+    @classmethod
+    def limpiar_nombre(cls, v):
+        return " ".join(v.split()) if isinstance(v, str) else v
+
+class FiguraResumen(BaseModel):
+    nombre: str
+    t: float
+    resolucion: int
+    figura: str
+    total_vertices: int
+    creado_en: str
+
+class FiguraOut(FiguraResumen):
+    vertices: list[list[float]]
+
 class OperacionLog(BaseModel):
     tipo: str
     metodo: str

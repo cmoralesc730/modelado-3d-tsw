@@ -4,6 +4,7 @@ import os
 MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
 MONGO_DB = os.getenv("MONGO_DB", "matrices")
 COLECCION_LOGS = os.getenv("MONGO_COLECCION_LOGS", "logs_ejecucion")
+COLECCION_FIGURAS = os.getenv("MONGO_COLECCION_FIGURAS", "figuras")
 
 # Tiempo de espera corto: si Mongo no responde la API tiene que seguir
 # atendiendo las operaciones de matrices igual.
