@@ -14,7 +14,32 @@
 <p>Estado WebSocket: <span id="ws-status" class="estado pendiente">Conectando...</span></p>
 <p>Calculadora de Matrices: <span id="calc-status" class="estado pendiente">Esperando...</span></p>
 <p>Modelo: <select id="modelo-select"></select></p>
-<p>Puntos cargados desde CSV: <strong id="point-count">0</strong></p>
+<p>Puntos cargados: <strong id="point-count">0</strong></p>
+
+<section id="morph" aria-labelledby="morph-titulo">
+  <h4 id="morph-titulo">Morph</h4>
+  <p class="figura">Figura: <strong id="figura-nombre" aria-live="polite">—</strong></p>
+  <div class="slider">
+    <span aria-hidden="true">Dona</span>
+    <input type="range" id="morph-slider" min="0" max="1" step="0.01" value="0"
+           aria-label="Morph dona a taza" aria-describedby="morph-t">
+    <span aria-hidden="true">Taza</span>
+  </div>
+  <p>t = <output id="morph-t" for="morph-slider">0.00</output></p>
+
+  <div class="fila">
+    <input type="text" id="figura-input" maxlength="50" placeholder="Nombre de la figura"
+           aria-label="Nombre de la figura">
+    <button type="button" id="guardar-figura">Guardar</button>
+  </div>
+  <div class="fila">
+    <select id="figuras-select" aria-label="Figuras guardadas">
+      <option value="">— figuras guardadas —</option>
+    </select>
+    <button type="button" id="cargar-figura">Cargar</button>
+  </div>
+  <p id="morph-msg" class="mensaje" role="status"></p>
+</section>
 </div>
 
 <script src="/static/viewer.js"></script>
