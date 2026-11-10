@@ -1,9 +1,12 @@
 import csv
+import json
+import math
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
+import morph_relay
 import security
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import HTMLResponse
@@ -97,6 +100,7 @@ def read_root():
             "modelos": "/api/modelos",
             "csv_model": "/api/modelo-csv?modelo=dona",
             "websocket": "/ws/transform",
+            "websocket_tipos": ["transform", *morph_relay.MANEJADORES],
             "viewer": "/view"
         }
     }
@@ -121,9 +125,53 @@ def obtener_puntos_modelo(modelo: str = "dona"):
     }
  
  
+EJES_TRANSFORMACION = ("tx", "ty", "tz", "rx", "ry", "rz")
+
+
+def leer_transformacion(data: dict) -> dict[str, float]:
+    """Traslaciones y rotaciones del mensaje (0 si faltan); deben ser números finitos."""
+    parametros = {}
+    for clave in EJES_TRANSFORMACION:
+        valor = data.get(clave, 0.0)
+        if isinstance(valor, bool) or not isinstance(valor, (int, float)) or not math.isfinite(valor):
+            raise morph_relay.MensajeInvalido(f"{', '.join(EJES_TRANSFORMACION)} deben ser números")
+        parametros[clave] = float(valor)
+    return parametros
+
+
+async def atender_mensaje(data) -> dict:
+    """Resuelve un mensaje del visor y devuelve la respuesta (nunca lanza).
+
+    Sin "tipo" (o "transform"): matriz 4x4 de transformación.
+    Con "tipo" morph / guardar_figura / cargar_figura / listar_figuras:
+    relevo hacia la calculadora (ver morph_relay).
+    """
+    tipo = data.get("tipo", "transform") if isinstance(data, dict) else None
+    if not isinstance(tipo, str):
+        tipo = "desconocido"
+    try:
+        if not isinstance(data, dict):
+            raise morph_relay.MensajeInvalido("el mensaje debe ser un objeto JSON")
+        if tipo == "transform":
+            matrix_4x4 = await obtener_matriz_transformacion(leer_transformacion(data))
+            return {"tipo": "transform", "matrix": matrix_4x4, "status": "ok"}
+        manejador = morph_relay.MANEJADORES.get(tipo)
+        if manejador is None:
+            raise morph_relay.MensajeInvalido(f"tipo de mensaje desconocido: {tipo[:30]}")
+        return await manejador(calculadora, data)
+    except morph_relay.MensajeInvalido as e:
+        return {"tipo": tipo, "status": "error", "error": str(e)}
+    except morph_relay.ErrorCalculadora as e:
+        return {"tipo": tipo, "status": "error", "error": e.mensaje}
+    except (httpx.HTTPError, KeyError, ValueError) as e:
+        # El detalle (URL interna, excepción) queda solo en el log del servidor
+        print(f"Calculadora no disponible en {CALCULADORA_URL}: {e!r}")
+        return {"tipo": tipo, "status": "error", "error": "Calculadora no disponible"}
+
+
 @app.websocket("/ws/transform")
 async def websocket_transform(websocket: WebSocket):
-    """Canal WebSocket para recibir parámetros de movimiento y enviar matrices 4x4."""
+    """Canal WebSocket del visor: matrices 4x4 y relevo del morph dona -> taza."""
     # Los navegadores no aplican CORS a WebSocket: se valida el Origin a mano
     if not security.origen_permitido(websocket.headers.get("origin")):
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
@@ -131,31 +179,18 @@ async def websocket_transform(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            data = await websocket.receive_json()
- 
-            # Extraer traslaciones y rotaciones recibidas
-            parametros = {clave: float(data.get(clave, 0.0)) for clave in ("tx", "ty", "tz", "rx", "ry", "rz")}
-
-            # La calculadora arma la matriz 4x4
+            texto = await websocket.receive_text()
             try:
-                matrix_4x4 = await obtener_matriz_transformacion(parametros)
-            except (httpx.HTTPError, KeyError, ValueError) as e:
-                # El detalle (URL interna, excepción) queda solo en el log del servidor
-                print(f"Calculadora no disponible en {CALCULADORA_URL}: {e!r}")
-                await websocket.send_json({
-                    "status": "error",
-                    "error": "Calculadora no disponible"
-                })
+                data = json.loads(texto)
+            except ValueError:
+                await websocket.send_json({"tipo": "desconocido", "status": "error",
+                                           "error": "el mensaje no es JSON válido"})
                 continue
-
-            # Responder con la matriz procesada
-            await websocket.send_json({
-                "matrix": matrix_4x4,
-                "status": "ok"
-            })
+            await websocket.send_json(await atender_mensaje(data))
     except WebSocketDisconnect:
         print("Cliente WebSocket desconectado")
- 
+
+
 @app.get("/view", response_class=HTMLResponse)
 def serve_viewer():
     """Servidor web directo para ver la interfaz 3D."""
